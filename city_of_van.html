@@ -13,7 +13,7 @@
         integrity="sha512-gZwIG9x3wUXg2hdXF6+rVkLF/0Vi9U8D2Ntg4Ga5I5BZpVkVxlJWbSQtXPSiUTtC0TjtGOmxa1AJPuV0CPthew=="
         crossorigin=""></script>
         <style>
-        #mapid { height: 180px; }
+        #mapid { height: 500px; }
         </style>
 </head>
 
@@ -22,7 +22,7 @@
     <div id="mapid"></div>
 
     <script>
-    var mymap = L.map('mapid').setView([49.3, -123.1], 13);
+    var mymap = L.map('mapid').setView([49.27, -123.07], 13);
 
     // var accessToken = pk.eyJ1IjoiZWluc2Fja2VuIiwiYSI6ImNrNHluaDJnODAxbmwzb3F2dWR2dmt4ZDkifQ.alhwL3UlvwZv4T_rMCM1Wg;
     L.tileLayer('https://api.mapbox.com/styles/v1/{id}/tiles/{z}/{x}/{y}?access_token=pk.eyJ1IjoiZWluc2Fja2VuIiwiYSI6ImNrNHluaDJnODAxbmwzb3F2dWR2dmt4ZDkifQ.alhwL3UlvwZv4T_rMCM1Wg', {
@@ -32,20 +32,69 @@
     
 }).addTo(mymap);
 
-var marker = L.marker([49.3, -123.1]).addTo(mymap);
+var testExportResponse = $.get("https://opendata.vancouver.ca/api/v2/catalog/datasets/graffiti/exports/json?rows=-1&pretty=false&timezone=UTC");
+console.log(testExportResponse);
 
-var circle = L.circle([51.508, -0.11], {
-    color: 'red',
-    fillColor: '#f03',
-    fillOpacity: 0.5,
-    radius: 500
-}).addTo(mymap);
+var url = "https://opendata.vancouver.ca/api/v2/catalog/datasets/graffiti/records?rows=100&pretty=false&timezone=UTC";
 
-var polygon = L.polygon([
-    [51.509, -0.08],
-    [51.503, -0.06],
-    [51.51, -0.047]
-]).addTo(mymap);
+    get(url).then(function(response) {
+
+        response = JSON.parse(response);
+        var records = response.records;
+        records.forEach(function(rec){
+            var coords = rec.record.fields.geom.geometry.coordinates;
+            var marker = L.marker([coords[1], coords[0]]).addTo(mymap);
+        });
+
+        // console.log(response);
+      }, function(error) {
+        console.error("Failed!", error);
+      });
+
+    function get(url) {
+        // Return a new promise.
+        return new Promise(function(resolve, reject) {
+          // Do the usual XHR stuff
+          var req = new XMLHttpRequest();
+          req.open("GET", url);
+    //   console.log("I am running");
+      
+          req.onload = function() {
+            // This is called even on 404 etc
+            // so check the status
+            if (req.status == 200) {
+              // Resolve the promise with the response text
+              resolve(req.response);
+            }
+            else {
+              // Otherwise reject with the status text
+              // which will hopefully be a meaningful error
+              reject(Error(req.statusText));
+            }
+          };
+      
+          // Handle network errors
+          req.onerror = function() {
+            reject(Error("Network Error"));
+          };
+      
+          // Make the request
+          req.send();
+        });
+      }
+
+// var circle = L.circle([51.508, -0.11], {
+//     color: 'red',
+//     fillColor: '#f03',
+//     fillOpacity: 0.5,
+//     radius: 500
+// }).addTo(mymap);
+
+// var polygon = L.polygon([
+//     [51.509, -0.08],
+//     [51.503, -0.06],
+//     [51.51, -0.047]
+// ]).addTo(mymap);
 
 
     </script>
